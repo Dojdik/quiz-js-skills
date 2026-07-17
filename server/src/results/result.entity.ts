@@ -20,11 +20,11 @@ export class Result {
   total: number;
 
   /** Percentage 0–100 */
-  @Column({ type: 'float' })
+  @Column({ type: 'double precision' })
   percentage: number;
 
   /** JSON: selected answers map questionId -> optionIndex */
-  @Column({ type: 'simple-json', nullable: true })
+  @Column({ type: 'jsonb', nullable: true })
   answers: Record<string, number> | null;
 
   @CreateDateColumn()

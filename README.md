@@ -1,29 +1,52 @@
 # JS Skills Quiz
 
-Квиз-тест на знание JavaScript: React (Vite) + Tailwind CSS на фронте, NestJS + TypeORM + SQLite на бэке.
+Квиз-тест на знание JavaScript: React (Vite) + Tailwind CSS, NestJS + TypeORM + **PostgreSQL**.
 
 ## Стек
 
 | Слой | Технологии |
 |------|------------|
-| Frontend | React 19, TypeScript, Vite, Tailwind CSS v4 |
-| Backend | NestJS, TypeORM, better-sqlite3 |
-| API | REST (`/api/questions`, `/api/results`) |
+| Frontend | React, TypeScript, Vite, Tailwind CSS v4 |
+| Backend | NestJS, TypeORM, PostgreSQL |
+| Infra | Docker Compose |
 
-## Быстрый старт
+## Быстрый старт (Docker)
 
-### 1. Backend
+```bash
+cp .env.example .env
+docker compose up --build
+```
+
+| Сервис | URL |
+|--------|-----|
+| UI | http://localhost:5173 |
+| API | http://localhost:3000/api |
+| PostgreSQL | localhost:5432 (`quiz` / `quiz` / db `quiz`) |
+
+Только база:
+
+```bash
+docker compose up -d db
+```
+
+## Локальная разработка
+
+### 1. PostgreSQL
+
+```bash
+docker compose up -d db
+```
+
+### 2. Backend
 
 ```bash
 cd server
+cp .env.example .env   # при необходимости
 npm install
 npm run start:dev
 ```
 
-API: http://localhost:3000/api  
-База: `server/data/quiz.sqlite` (создаётся автоматически, вопросы сидируются при первом запуске).
-
-### 2. Frontend
+### 3. Frontend
 
 ```bash
 cd client
@@ -31,43 +54,30 @@ npm install
 npm run dev
 ```
 
-UI: http://localhost:5173  
-Прокси Vite перенаправляет `/api` → `http://localhost:3000`.
-
-Из корня:
-
-```bash
-npm run dev:server   # терминал 1
-npm run dev:client   # терминал 2
-```
+Vite проксирует `/api` → `http://localhost:3000`.
 
 ## API
 
-### `GET /api/questions`
+- `GET /api/questions` — вопросы без правильных ответов
+- `POST /api/results` — сохранение результата (`playerName`, `answers`)
+- `GET /api/results?limit=15` — рейтинг
 
-Список вопросов **без** правильных ответов.
-
-### `POST /api/results`
-
-Сохранение результата. Сервер сам считает score по ответам.
-
-```json
-{
-  "playerName": "Alex",
-  "answers": { "1": 0, "2": 1 }
-}
-```
-
-### `GET /api/results?limit=15`
-
-Таблица лидеров (по проценту и дате).
-
-## Структура
+## Структура frontend
 
 ```
-quiz-tasks/
-├── client/          # React + Vite + Tailwind
-├── server/          # NestJS API + SQLite
-│   └── data/        # quiz.sqlite
-└── package.json     # scripts для monorepo
+client/src/
+├── App.tsx                 # оркестрация экранов
+├── api.ts
+├── types.ts
+├── hooks/useQuiz.ts        # состояние квиза
+├── components/
+│   ├── Layout.tsx
+│   ├── Header.tsx
+│   ├── WelcomeScreen.tsx
+│   ├── QuizScreen.tsx
+│   ├── QuestionCard.tsx
+│   ├── QuizProgress.tsx
+│   ├── ResultScreen.tsx
+│   └── LeaderboardScreen.tsx
+└── utils/difficulty.ts
 ```

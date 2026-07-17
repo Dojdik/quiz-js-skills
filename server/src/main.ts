@@ -1,15 +1,23 @@
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  const config = app.get(ConfigService);
 
   app.setGlobalPrefix('api');
+
+  const corsOrigin = config.get<string>(
+    'CORS_ORIGIN',
+    'http://localhost:5173',
+  );
   app.enableCors({
-    origin: ['http://localhost:5173', 'http://127.0.0.1:5173'],
+    origin: corsOrigin.split(',').map((o) => o.trim()),
     credentials: true,
   });
+
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
@@ -18,7 +26,7 @@ async function bootstrap() {
     }),
   );
 
-  const port = process.env.PORT ?? 3000;
+  const port = config.get<number>('PORT', 3000);
   await app.listen(port);
   console.log(`Quiz API running on http://localhost:${port}/api`);
 }

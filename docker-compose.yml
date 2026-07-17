@@ -1,0 +1,54 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: quiz-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-quiz}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-quiz}
+      POSTGRES_DB: ${POSTGRES_DB:-quiz}
+    ports:
+      - '${POSTGRES_PORT:-5432}:5432'
+    volumes:
+      - quiz_pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-quiz} -d ${POSTGRES_DB:-quiz}']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: quiz-api
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      PORT: 3000
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_USER: ${POSTGRES_USER:-quiz}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-quiz}
+      DB_NAME: ${POSTGRES_DB:-quiz}
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:5173}
+    ports:
+      - '${API_PORT:-3000}:3000'
+
+  client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: ${VITE_API_URL:-http://localhost:3000}
+    container_name: quiz-client
+    restart: unless-stopped
+    depends_on:
+      - api
+    ports:
+      - '${CLIENT_PORT:-5173}:80'
+
+volumes:
+  quiz_pg_data:

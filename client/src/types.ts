@@ -29,3 +29,5 @@ export type SubmitResultResponse = {
     selectedIndex: number | null;
   }[];
 };
+
+export type Phase = 'welcome' | 'quiz' | 'result' | 'leaderboard';

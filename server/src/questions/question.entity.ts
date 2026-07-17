@@ -9,7 +9,7 @@ export class Question {
   text: string;
 
   /** JSON array of option strings */
-  @Column({ type: 'simple-json' })
+  @Column({ type: 'jsonb' })
   options: string[];
 
   @Column({ type: 'int' })

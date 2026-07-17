@@ -1,7 +1,7 @@
 node_modules/
 dist/
-server/data/*.sqlite
-server/data/*.sqlite-*
+server/data/
 .env
+server/.env
 *.log
 .DS_Store
