@@ -1,35 +1,65 @@
 # JS Skills Quiz
 
-Квиз-тест на знание JavaScript: React (Vite) + Tailwind CSS, NestJS + TypeORM + **PostgreSQL**.
+Квиз-тест на знание **JavaScript**: вопросы по типам, coercion, массивам, замыканиям, async/await, event loop, scope и другим темам.
+
+Результаты прохождений сохраняются в **PostgreSQL**. Правильные ответы на клиент не отдаются — score считает сервер.
+
+---
 
 ## Стек
 
 | Слой | Технологии |
 |------|------------|
 | Frontend | React, TypeScript, Vite, Tailwind CSS v4 |
-| Backend | NestJS, TypeORM, PostgreSQL |
-| Infra | Docker Compose |
+| Backend | NestJS, TypeORM, class-validator |
+| Database | PostgreSQL 16 (`jsonb` для options/answers) |
+| Infra | Docker Compose (db + api + client) |
+
+---
+
+## Возможности
+
+- Приветственный экран с именем игрока
+- 15 вопросов с категориями и уровнем сложности
+- Прогресс, навигация «Назад / Далее»
+- Подсчёт и сохранение результата в БД
+- Таблица лидеров
+- Seed вопросов при первом запуске API
+
+---
 
 ## Быстрый старт (Docker)
 
+Полный стек (PostgreSQL + API + UI):
+
 ```bash
-cp .env.example .env
+cp .env.example .env   # опционально, есть значения по умолчанию
 docker compose up --build
 ```
 
-| Сервис | URL |
-|--------|-----|
+| Сервис | URL / подключение |
+|--------|-------------------|
 | UI | http://localhost:5173 |
 | API | http://localhost:3000/api |
-| PostgreSQL | localhost:5432 (`quiz` / `quiz` / db `quiz`) |
+| PostgreSQL | `localhost:5432` · user/password/db: `quiz` / `quiz` / `quiz` |
 
-Только база:
+Остановка:
+
+```bash
+docker compose down
+```
+
+Только база (для локальной разработки frontend/backend на хосте):
 
 ```bash
 docker compose up -d db
 ```
 
+---
+
 ## Локальная разработка
+
+Нужны **Node.js 20+**, **npm** и **Docker** (для PostgreSQL).
 
 ### 1. PostgreSQL
 
@@ -46,6 +76,8 @@ npm install
 npm run start:dev
 ```
 
+API: http://localhost:3000/api
+
 ### 3. Frontend
 
 ```bash
@@ -54,30 +86,222 @@ npm install
 npm run dev
 ```
 
-Vite проксирует `/api` → `http://localhost:3000`.
+UI: http://localhost:5173
+
+Vite проксирует запросы `/api` → `http://localhost:3000` (см. `client/vite.config.ts`).
+
+### Скрипты из корня
+
+```bash
+npm run dev:server    # NestJS watch
+npm run dev:client    # Vite dev
+npm run build:server
+npm run build:client
+npm run start:server  # production (после build)
+```
+
+---
+
+## Переменные окружения
+
+### Корень (`.env` / `.env.example`) — Docker Compose
+
+| Переменная | По умолчанию | Описание |
+|------------|--------------|----------|
+| `POSTGRES_USER` | `quiz` | Пользователь PostgreSQL |
+| `POSTGRES_PASSWORD` | `quiz` | Пароль |
+| `POSTGRES_DB` | `quiz` | Имя БД |
+| `POSTGRES_PORT` | `5432` | Порт на хосте |
+| `API_PORT` | `3000` | Порт API на хосте |
+| `CLIENT_PORT` | `5173` | Порт UI на хосте |
+| `CORS_ORIGIN` | `http://localhost:5173` | Разрешённые origin (через запятую) |
+| `VITE_API_URL` | `http://localhost:3000` | Базовый URL API при сборке client-образа |
+
+### Backend (`server/.env`)
+
+| Переменная | По умолчанию | Описание |
+|------------|--------------|----------|
+| `PORT` | `3000` | Порт NestJS |
+| `DB_HOST` | `localhost` | Хост БД (`db` внутри Compose) |
+| `DB_PORT` | `5432` | Порт БД |
+| `DB_USER` | `quiz` | Пользователь |
+| `DB_PASSWORD` | `quiz` | Пароль |
+| `DB_NAME` | `quiz` | База |
+| `CORS_ORIGIN` | `http://localhost:5173` | CORS |
+
+### Frontend
+
+| Переменная | Описание |
+|------------|----------|
+| `VITE_API_URL` | Если задана — запросы идут на `{VITE_API_URL}/api`. Если нет — относительный путь `/api` (прокси Vite / nginx). |
+
+---
 
 ## API
 
-- `GET /api/questions` — вопросы без правильных ответов
-- `POST /api/results` — сохранение результата (`playerName`, `answers`)
-- `GET /api/results?limit=15` — рейтинг
+Префикс: `/api`
 
-## Структура frontend
+### `GET /questions`
+
+Список вопросов **без** `correctIndex`.
+
+```json
+[
+  {
+    "id": 1,
+    "text": "Что выведет `console.log(typeof null)`?",
+    "options": ["\"null\"", "\"object\"", "\"undefined\"", "\"number\""],
+    "category": "types",
+    "difficulty": "easy"
+  }
+]
+```
+
+### `POST /results`
+
+Сохранение результата. Сервер сам считает `score` / `percentage`.
+
+**Тело запроса:**
+
+```json
+{
+  "playerName": "Alex",
+  "answers": {
+    "1": 1,
+    "2": 0
+  }
+}
+```
+
+`answers` — объект `questionId → индекс выбранного варианта`.
+
+**Ответ (фрагмент):**
+
+```json
+{
+  "id": 1,
+  "playerName": "Alex",
+  "score": 14,
+  "total": 15,
+  "percentage": 93.33,
+  "createdAt": "2026-07-17T20:00:00.000Z",
+  "breakdown": [
+    {
+      "questionId": 1,
+      "correct": true,
+      "correctIndex": 1,
+      "selectedIndex": 1
+    }
+  ]
+}
+```
+
+### `GET /results?limit=15`
+
+Таблица лидеров (сортировка: `percentage` DESC, затем `createdAt` DESC). Без поля `answers`.
+
+### `GET /results/:id`
+
+Один результат по id.
+
+---
+
+## Структура проекта
 
 ```
-client/src/
-├── App.tsx                 # оркестрация экранов
-├── api.ts
-├── types.ts
-├── hooks/useQuiz.ts        # состояние квиза
-├── components/
-│   ├── Layout.tsx
-│   ├── Header.tsx
-│   ├── WelcomeScreen.tsx
-│   ├── QuizScreen.tsx
-│   ├── QuestionCard.tsx
-│   ├── QuizProgress.tsx
-│   ├── ResultScreen.tsx
-│   └── LeaderboardScreen.tsx
-└── utils/difficulty.ts
+quiz-tasks/
+├── docker-compose.yml      # db, api, client
+├── .env.example
+├── package.json            # удобные scripts monorepo
+├── client/                 # React + Vite + Tailwind
+│   ├── Dockerfile
+│   ├── nginx.conf          # SPA + proxy /api → api
+│   ├── vite.config.ts
+│   └── src/
+│       ├── App.tsx
+│       ├── api.ts
+│       ├── types.ts
+│       ├── hooks/useQuiz.ts
+│       ├── components/
+│       └── utils/difficulty.ts
+└── server/                 # NestJS API
+    ├── Dockerfile
+    ├── .env.example
+    └── src/
+        ├── main.ts
+        ├── app.module.ts
+        ├── questions/      # entity, seed, CRUD list
+        └── results/        # entity, DTO, save + leaderboard
 ```
+
+### Frontend (компоненты)
+
+| Файл | Назначение |
+|------|------------|
+| `App.tsx` | Оркестрация фаз (welcome / quiz / result / leaderboard) |
+| `hooks/useQuiz.ts` | Состояние квиза и вызовы API |
+| `components/Layout.tsx` | Общий layout, ошибки, footer |
+| `components/Header.tsx` | Заголовок |
+| `components/WelcomeScreen.tsx` | Имя и старт |
+| `components/QuizScreen.tsx` | Экран прохождения |
+| `components/QuestionCard.tsx` | Вопрос и варианты |
+| `components/QuizProgress.tsx` | Прогресс-бар |
+| `components/ResultScreen.tsx` | Итог и breakdown |
+| `components/LeaderboardScreen.tsx` | Рейтинг |
+
+### Backend (модули)
+
+| Модуль | Назначение |
+|--------|------------|
+| `QuestionsModule` | Сущность `questions`, seed, `GET /questions` |
+| `ResultsModule` | Сущность `results`, `POST/GET /results` |
+| TypeORM | `synchronize: true` в dev — схема создаётся автоматически |
+
+---
+
+## Схема БД (упрощённо)
+
+**questions**
+
+| Поле | Тип | Описание |
+|------|-----|----------|
+| id | serial PK | |
+| text | text | Текст вопроса |
+| options | jsonb | Массив строк-вариантов |
+| correctIndex | int | Индекс верного ответа |
+| category | varchar | Категория |
+| difficulty | varchar | easy / medium / hard |
+
+**results**
+
+| Поле | Тип | Описание |
+|------|-----|----------|
+| id | serial PK | |
+| playerName | varchar(100) | Имя |
+| score | int | Число верных |
+| total | int | Всего вопросов |
+| percentage | float | 0–100 |
+| answers | jsonb | Карта выбранных ответов |
+| createdAt | timestamp | Время сохранения |
+
+---
+
+## Полезные команды Docker
+
+```bash
+# логи
+docker compose logs -f api
+docker compose logs -f db
+
+# пересборка без кэша
+docker compose build --no-cache
+
+# удалить контейнеры и volume БД (данные пропадут)
+docker compose down -v
+```
+
+---
+
+## Лицензия
+
+Учебный / демо-проект.
