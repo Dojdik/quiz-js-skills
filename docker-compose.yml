@@ -33,16 +33,19 @@ services:
       DB_USER: ${POSTGRES_USER:-quiz}
       DB_PASSWORD: ${POSTGRES_PASSWORD:-quiz}
       DB_NAME: ${POSTGRES_DB:-quiz}
-      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:5173}
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:5173,https://quiz-api.185.164.138.113.sslip.io}
+    # API снаружи через Caddy; локально — 127.0.0.1:3000
     ports:
-      - '${API_PORT:-3000}:3000'
+      - '127.0.0.1:${API_PORT:-3000}:3000'
+    networks:
+      - default
 
   client:
     build:
       context: ./client
       dockerfile: Dockerfile
       args:
-        VITE_API_URL: ${VITE_API_URL:-http://localhost:3000}
+        VITE_API_URL: ${VITE_API_URL:-https://quiz-api.185.164.138.113.sslip.io}
     container_name: quiz-client
     restart: unless-stopped
     depends_on:
@@ -50,5 +53,24 @@ services:
     ports:
       - '${CLIENT_PORT:-5173}:80'
 
+  caddy:
+    image: caddy:2-alpine
+    container_name: quiz-caddy
+    restart: unless-stopped
+    depends_on:
+      - api
+    ports:
+      # 80 занят lighttpd — только HTTPS (TLS-ALPN для Let's Encrypt)
+      - '443:443'
+      - '443:443/udp'
+    volumes:
+      - ./caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    networks:
+      - default
+
 volumes:
   quiz_pg_data:
+  caddy_data:
+  caddy_config:

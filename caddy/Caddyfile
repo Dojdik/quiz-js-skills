@@ -1,0 +1,21 @@
+{
+	# :80 занят lighttpd на хосте — без HTTP challenge и редиректов
+	auto_https disable_redirects
+}
+
+quiz-api.185.164.138.113.sslip.io {
+	encode gzip
+
+	header {
+		X-Content-Type-Options nosniff
+		Referrer-Policy no-referrer-when-downgrade
+		-Server
+	}
+
+	reverse_proxy api:3000
+
+	log {
+		output stdout
+		format console
+	}
+}

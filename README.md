@@ -288,6 +288,22 @@ quiz-tasks/
 
 ---
 
+## Публичный API (Caddy + HTTPS)
+
+Домен: **https://quiz-api.185.164.138.113.sslip.io**
+
+Caddy в Docker проксирует HTTPS → Nest API. Let's Encrypt (TLS-ALPN на `:443`, т.к. `:80` занят lighttpd).
+
+```bash
+docker compose up -d caddy api
+# проверка
+curl https://quiz-api.185.164.138.113.sslip.io/api/questions
+```
+
+Конфиг: `caddy/Caddyfile`. Сертификаты в volume `caddy_data`.
+
+---
+
 ## Деплой frontend на Vercel
 
 На Vercel выкладывается **только клиент** (`client/`). NestJS + PostgreSQL остаются на своём хостинге (Railway, Render, VPS, Docker и т.д.).
