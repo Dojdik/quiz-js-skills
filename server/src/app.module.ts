@@ -1,9 +1,8 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { Question } from './questions/question.entity';
+import { Question, Result } from './entities';
 import { QuestionsModule } from './questions/questions.module';
-import { Result } from './results/result.entity';
 import { ResultsModule } from './results/results.module';
 
 @Module({

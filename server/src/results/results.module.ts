@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { QuestionsModule } from '../questions/questions.module';
-import { Result } from './result.entity';
+import { Result } from '../entities';
 import { ResultsController } from './results.controller';
 import { ResultsService } from './results.service';
 

@@ -230,8 +230,9 @@ quiz-tasks/
     └── src/
         ├── main.ts
         ├── app.module.ts
-        ├── questions/      # entity, seed, CRUD list
-        └── results/        # entity, DTO, save + leaderboard
+        ├── entities/       # TypeORM-схемы (Question, Result)
+        ├── questions/      # seed, list API
+        └── results/        # DTO, save + leaderboard
 ```
 
 ### Frontend (компоненты)

@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { QuestionsService } from '../questions/questions.service';
 import { CreateResultDto } from './dto/create-result.dto';
-import { Result } from './result.entity';
+import { Result } from '../entities';
 
 @Injectable()
 export class ResultsService {
