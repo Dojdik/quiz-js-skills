@@ -231,7 +231,8 @@ quiz-tasks/
         ├── main.ts
         ├── app.module.ts
         ├── entities/       # TypeORM-схемы (Question, Result)
-        ├── questions/      # seed, list API
+        ├── seeds/          # начальные данные (questions.seed)
+        ├── questions/      # list API
         └── results/        # DTO, save + leaderboard
 ```
 

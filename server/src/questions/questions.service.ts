@@ -2,7 +2,7 @@ import { Injectable, OnModuleInit } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Question } from '../entities';
-import { QUIZ_SEED } from './questions.seed';
+import { QUIZ_SEED } from '../seeds/questions.seed';
 
 export type PublicQuestion = Omit<Question, 'correctIndex'>;
 
