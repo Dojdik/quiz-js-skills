@@ -292,7 +292,7 @@ quiz-tasks/
 
 Домен: **https://quiz-api.185.164.138.113.sslip.io**
 
-Caddy в Docker проксирует HTTPS → Nest API. Let's Encrypt (TLS-ALPN на `:443`, т.к. `:80` занят lighttpd).
+Caddy в Docker проксирует HTTP/HTTPS → Nest API. Let's Encrypt (`:80` + `:443`, редирект HTTP→HTTPS).
 
 ```bash
 docker compose up -d caddy api
