@@ -8,6 +8,8 @@
     "dev:server": "npm run start:dev --prefix server",
     "build:client": "npm run build --prefix client",
     "build:server": "npm run build --prefix server",
-    "start:server": "npm run start:prod --prefix server"
+    "start:server": "npm run start:prod --prefix server",
+    "deploy:vercel": "bash scripts/deploy-vercel.sh",
+    "deploy:vercel:prod": "bash scripts/deploy-vercel.sh --prod --yes"
   }
 }

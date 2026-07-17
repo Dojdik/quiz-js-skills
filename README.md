@@ -288,6 +288,51 @@ quiz-tasks/
 
 ---
 
+## Деплой frontend на Vercel
+
+На Vercel выкладывается **только клиент** (`client/`). NestJS + PostgreSQL остаются на своём хостинге (Railway, Render, VPS, Docker и т.д.).
+
+### Скрипт
+
+```bash
+# preview
+./scripts/deploy-vercel.sh
+# или
+npm run deploy:vercel
+
+# production
+./scripts/deploy-vercel.sh --prod --api-url https://your-api.example.com
+# или
+VITE_API_URL=https://your-api.example.com npm run deploy:vercel:prod
+```
+
+Требования: аккаунт Vercel, CLI (`npx vercel` / `vercel login`).
+
+| Опция | Описание |
+|-------|----------|
+| `--prod` | Production deploy |
+| `--yes` | Без интерактивных вопросов |
+| `--api-url URL` | `VITE_API_URL` на время сборки |
+| `--token TOKEN` | Токен для CI (`VERCEL_TOKEN`) |
+
+Конфиг SPA: `client/vercel.json`.
+
+### После деплоя
+
+1. В NestJS укажите `CORS_ORIGIN` с доменом Vercel (например `https://your-app.vercel.app`).
+2. В Vercel Dashboard → Environment Variables добавьте `VITE_API_URL` для git-деплоев.
+3. API должен быть доступен по HTTPS из браузера.
+
+### CI (пример)
+
+```bash
+export VERCEL_TOKEN=...
+export VITE_API_URL=https://api.example.com
+./scripts/deploy-vercel.sh --prod --yes
+```
+
+---
+
 ## Полезные команды Docker
 
 ```bash
