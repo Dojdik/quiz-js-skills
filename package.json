@@ -1,0 +1,13 @@
+{
+  "name": "quiz-tasks",
+  "version": "1.0.0",
+  "private": true,
+  "description": "JavaScript skills quiz — React Vite + NestJS + Tailwind + SQLite",
+  "scripts": {
+    "dev:client": "npm run dev --prefix client",
+    "dev:server": "npm run start:dev --prefix server",
+    "build:client": "npm run build --prefix client",
+    "build:server": "npm run build --prefix server",
+    "start:server": "npm run start:prod --prefix server"
+  }
+}
